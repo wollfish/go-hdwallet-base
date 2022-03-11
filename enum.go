@@ -27,6 +27,7 @@ const (
 	ETC        = ZeroQuote + 61
 	BCH        = ZeroQuote + 145
 	TRX        = ZeroQuote + 195
+	SOL        = ZeroQuote + 501
 	QTUM       = ZeroQuote + 2301
 
 	// btc token

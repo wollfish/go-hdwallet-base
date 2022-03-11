@@ -10,6 +10,7 @@ A multi-cryptocurrency HD wallet implementated by golang.
 - DASH
 - ETH
 - TRX
+- SOL
 - ETC
 - BCH
 - QTUM
