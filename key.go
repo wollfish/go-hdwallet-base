@@ -2,14 +2,21 @@ package hdwallet
 
 import (
 	"crypto/ecdsa"
+	"crypto/sha256"
 	"encoding/hex"
+	"github.com/btcsuite/btcutil/base58"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/wollac/iota-crypto-demo/pkg/ed25519"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcutil/hdkeychain"
 	"github.com/cpacia/bchutil"
+	"github.com/wollac/iota-crypto-demo/pkg/slip10"
 )
+
+const tronBytePrefix = byte(0x41)
 
 // Key struct
 type Key struct {
@@ -23,6 +30,10 @@ type Key struct {
 	// for eth
 	PrivateECDSA *ecdsa.PrivateKey
 	PublicECDSA  *ecdsa.PublicKey
+
+	// for sol
+	PrivateEd25519 ed25519.PrivateKey
+	PublicEd25519  ed25519.PublicKey
 }
 
 // NewKey creates a master key
@@ -74,6 +85,13 @@ func (k *Key) init() error {
 
 	k.PrivateECDSA = k.Private.ToECDSA()
 	k.PublicECDSA = &k.PrivateECDSA.PublicKey
+
+	ed25519Key, err := slip10.DeriveKeyFromPath(k.Opt.Seed, slip10.Ed25519(), k.Opt.GetPath())
+	if err != nil {
+		return err
+	}
+
+	k.PublicEd25519, k.PrivateEd25519 = slip10.Ed25519Key(ed25519Key)
 	return nil
 }
 
@@ -227,4 +245,29 @@ func (k *Key) AddressP2WPKHInP2SH() (string, error) {
 	}
 
 	return addr1.EncodeAddress(), nil
+}
+
+func (k *Key) AddressTron() (string, error) {
+	address := crypto.PubkeyToAddress(*k.PublicECDSA)
+	addressInBytes := make([]byte, 0)
+	addressInBytes = append(addressInBytes, tronBytePrefix)
+	addressInBytes = append(addressInBytes, address.Bytes()...)
+
+	h256h0 := sha256.New()
+	h256h0.Write(addressInBytes)
+	h0 := h256h0.Sum(nil)
+
+	h256h1 := sha256.New()
+	h256h1.Write(h0)
+	h1 := h256h1.Sum(nil)
+
+	inputCheck := addressInBytes
+	inputCheck = append(inputCheck, h1[:4]...)
+
+	return base58.Encode(inputCheck), nil
+}
+
+// AddressSOL generate public base58 address for SOL blockchain
+func (k *Key) AddressSOL() (string, error) {
+	return base58.Encode(k.PublicEd25519), nil
 }

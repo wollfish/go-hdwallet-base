@@ -1,9 +1,5 @@
 package hdwallet
 
-import (
-	"github.com/ethereum/go-ethereum/crypto"
-)
-
 func init() {
 	coins[SOL] = newSOL
 }
@@ -42,5 +38,5 @@ func (c *sol) GetKey() *Key {
 }
 
 func (c *sol) GetAddress() (string, error) {
-	return crypto.PubkeyToAddress(*c.key.PublicECDSA).Hex(), nil
+	return c.key.AddressSOL()
 }
