@@ -7,13 +7,13 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/wollac/iota-crypto-demo/pkg/ed25519"
+	"github.com/wollac/iota-crypto-demo/pkg/slip10"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/btcutil/hdkeychain"
 	"github.com/cpacia/bchutil"
-	"github.com/wollac/iota-crypto-demo/pkg/slip10"
 )
 
 const tronBytePrefix = byte(0x41)
@@ -86,12 +86,15 @@ func (k *Key) init() error {
 	k.PrivateECDSA = k.Private.ToECDSA()
 	k.PublicECDSA = &k.PrivateECDSA.PublicKey
 
-	ed25519Key, err := slip10.DeriveKeyFromPath(k.Opt.Seed, slip10.Ed25519(), k.Opt.GetPath())
-	if err != nil {
-		return err
-	}
+	// Ed25519 requires hardened path elements
+	if k.Opt.Change >= ZeroQuote && k.Opt.AddressIndex >= ZeroQuote {
+		ed25519Key, err := slip10.DeriveKeyFromPath(k.Opt.Seed, slip10.Ed25519(), k.Opt.GetPath())
+		if err != nil {
+			return nil
+		}
 
-	k.PublicEd25519, k.PrivateEd25519 = slip10.Ed25519Key(ed25519Key)
+		k.PublicEd25519, k.PrivateEd25519 = slip10.Ed25519Key(ed25519Key)
+	}
 	return nil
 }
 
